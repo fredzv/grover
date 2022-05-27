@@ -70,9 +70,9 @@ describe Grover::Processor do
 
       context 'when puppeteer package is not installed' do
         # Temporarily move the node puppeteer folder
-        before { FileUtils.move 'node_modules/puppeteer', 'node_modules/puppeteer_temp' }
+        before { FileUtils.move 'node_modules/puppeteer', './node_modules/puppeteer_temp' }
 
-        after { FileUtils.move 'node_modules/puppeteer_temp', 'node_modules/puppeteer' }
+        after { FileUtils.move 'node_modules/puppeteer_temp', './node_modules/puppeteer' }
 
         it 'raises a DependencyError' do
           expect { convert }.to raise_error Grover::DependencyError, Grover::Utils.squish(<<~ERROR)
@@ -95,6 +95,29 @@ describe Grover::Processor do
               You need to add it to '#{Dir.pwd}/package.json' and run 'npm install'
             ERROR
           end
+        end
+      end
+
+      context 'when puppeteer-core package is in package.json' do
+        before do
+          FileUtils.copy 'package.json', 'package.json.tmp'
+          FileUtils.cp_r 'node_modules', './node_modules_temp'
+
+          IO.write('package.json', File.open('package.json') { |f| f.read.gsub(/"puppeteer"/, '"puppeteer-core"') })
+          `npm install`
+        end
+
+        after do
+          FileUtils.move 'package.json.tmp', 'package.json'
+          FileUtils.rm_r 'node_modules'
+          FileUtils.move 'node_modules_temp', './node_modules'
+        end
+
+        it 'raises Chrome install error (which will only happen when puppeteer-core has loaded properly)' do
+          expect { convert }.to raise_error Grover::JavaScript::Error, Regexp.new(Grover::Utils.squish(<<~ERROR))
+            Could not find expected browser \\(chrome\\) locally\\.
+            Run `npm install` to download the correct Chromium revision
+          ERROR
         end
       end
 
@@ -665,7 +688,7 @@ describe Grover::Processor do
                   <p id="loading">Loading</p>
                   <p id="content" style="display: none">Loaded</p>
                 </body>
-  
+
                 <script>
                   setTimeout(function() {
                     document.getElementById('loading').remove();
@@ -875,7 +898,7 @@ describe Grover::Processor do
               <head>
                 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
                       integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
-                      crossorigin="anonymous">                
+                      crossorigin="anonymous">
               </head>
               <body class="bg-dark"></body>
             </html>

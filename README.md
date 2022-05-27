@@ -1,4 +1,4 @@
-[![Test Build Status](https://github.com/Studiosity/grover/actions/workflows/test.yml/badge.svg)](https://github.com/Studiosity/grover/actions/workflows/test.yml)
+[![Travis Build Status](https://travis-ci.org/Studiosity/grover.svg?branch=main)](https://travis-ci.org/Studiosity/grover)
 [![Maintainability](https://api.codeclimate.com/v1/badges/37609653789bcf2c8d94/maintainability)](https://codeclimate.com/github/Studiosity/grover/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/37609653789bcf2c8d94/test_coverage)](https://codeclimate.com/github/Studiosity/grover/test_coverage)
 [![Gem Version](https://badge.fury.io/rb/grover.svg)](https://badge.fury.io/rb/grover)
@@ -19,9 +19,32 @@ gem 'grover'
 ```
 
 ### Google Puppeteer
+This will also install a compatible version of Chromium
 ```bash
 npm install puppeteer
 ```
+
+
+### Google Puppeteer core
+If you want to manage the installation of Chromium/Chrome/Firefox yourself you can instead install `puppeteer-core`.
+```bash
+npm install puppeteer-core
+```
+You may need to specify to Grover the type of browser and where you have installed it via the options.
+```ruby
+# config/initializers/grover.rb
+Grover.configure do |config|
+  config.options = {
+    product: 'firefox',
+    executable_path: '/my/path/to/firefox'
+  }
+end
+```
+N.B. Per the `puppeteer` documentation:
+> BEWARE: Puppeteer is only guaranteed to work with the bundled Chromium, use at your own risk.
+
+To understand the differences between `puppeteer` and `puppeteer-core` see
+[the puppeteer documentation](https://github.com/puppeteer/puppeteer/blob/main/docs/api.md#puppeteer-vs-puppeteer-core)
 
 
 ## Usage
@@ -57,7 +80,7 @@ html = MyController.new.render_to_string({
   layout: 'my_layout',
   locals: { :@instance_var => ... }
 })
-pdf = Grover.new(html, **grover_options).to_pdf
+pdf = Grover.new(html, grover_options).to_pdf
 ```
 
 ### Relative paths
@@ -87,8 +110,7 @@ Grover can be configured to adjust the layout of the resulting PDF/image.
 
 For available PDF options, see https://github.com/puppeteer/puppeteer/blob/main/docs/api.md#pagepdfoptions
 
-Also available are the `emulate_media`, `cache`, `viewport`, `timeout`, `requestTimeout`, `convertTimeout`
-and `launch_args` options.
+Also available are the `emulate_media`, `cache`, `viewport`, `timeout` and `launch_args` options.
 
 ```ruby
 # config/initializers/grover.rb
@@ -110,14 +132,12 @@ Grover.configure do |config|
     media_features: [{ name: 'prefers-color-scheme', value: 'dark' }],
     timezone: 'Australia/Sydney',
     vision_deficiency: 'deuteranopia',
-    extra_http_headers: { 'Accept-Language': 'en-US' },
+    extraHTTPHeaders: { 'Accept-Language': 'en-US' },
     geolocation: { latitude: 59.95, longitude: 30.31667 },
     focus: '#some-element',
     hover: '#another-element',
     cache: false,
     timeout: 0, # Timeout in ms. A value of `0` means 'no timeout'
-    request_timeout: 1000, # Timeout when fetching the content (overloads the `timeout` option)
-    convert_timeout: 2000, # Timeout when converting the content (overloads the `timeout` option, only applies to PDF conversion)
     launch_args: ['--font-render-hinting=medium'],
     wait_until: 'domcontentloaded'
   }
@@ -162,7 +182,7 @@ The `wait_for_timeout` option can also be used to wait the specified number of m
 The `raise_on_request_failure` option, when enabled, will raise a `Grover::JavaScript::RequestFailedError`
 if the initial content request or any subsequent asset request returns a bad response or times out.
 
-The Chrome/Chromium executable path can be overridden with the `executable_path` option.
+The Chrome/Chromium/Firefox executable path can be overridden with the `executable_path` and `product` options.
 
 Javascript can be executed on the page (after render and before conversion to PDF/image)
 with the `execute_script` option.
